@@ -1,16 +1,5 @@
 <?php
 
-class data {
-    var $name;
-    var $age;
-
-    function __construct($name,$age)
-    {
-        $this->$name = $name;
-        $this->$age = $age;
-    }
-}
-
 class DBManager
 {
 
@@ -26,11 +15,13 @@ class DBManager
 
     //构造器私有化:禁止从类外部实例化
     private function __construct()
-    { }
+    {
+    }
 
     //克隆方法私有化:禁止从外部克隆对象
     private function __clone()
-    { }
+    {
+    }
 
     //因为用静态属性返回类实例,而只能在静态方法使用静态属性
     //所以必须创建一个静态方法来生成当前类的唯一实例
@@ -58,8 +49,9 @@ class DBManager
         return self::$instance;
     }
 
-    public static function destoryInstance() {
-        
+    public static function destoryInstance()
+    {
+
         self::$instance = null;
     }
 
@@ -98,7 +90,7 @@ class DBManager
      */
     public function exec($sql)
     {
-        LocalLog::logSql("info","SQL","[ ".$this->dsn." ] ".$sql);
+        LocalLog::logSql("info", "SQL", "[ " . $this->dsn . " ] " . $sql);
 
         try {
 
@@ -107,16 +99,15 @@ class DBManager
                 'data' => $this->pdo->exec($sql),
                 'msg' => SERVICE_RESPOSE_SUCCESS['msg']
             );
-
         } catch (PDOException $e) {
 
-            if (strstr($e->getMessage(),"1062 Duplicate entry")) {
+            if (strstr($e->getMessage(), "1062 Duplicate entry")) {
 
-                $arrs = explode('1062 Duplicate entry ',$e->getMessage());
-                $value = explode(' for key ',$arrs[1])[0];
-                $key = explode(' for key ',$arrs[1])[1];
+                $arrs = explode('1062 Duplicate entry ', $e->getMessage());
+                $value = explode(' for key ', $arrs[1])[0];
+                $key = explode(' for key ', $arrs[1])[1];
 
-                LocalLog::ERROR('DBManager',"字段:$key 数据重复:$value");
+                LocalLog::ERROR('DBManager', "字段:$key 数据重复:$value");
 
                 return array(
                     'code' => SERVICE_SQL_ERROR['code'],
@@ -125,14 +116,14 @@ class DBManager
                 );
             }
             // else if ($e->errorInfo[1] == 2006 || $e->errorInfo[1] == 2013) {
-                
+
             //     DBManager::destoryInstance();
             //     DBManager::getManager();
             //     $this->exec($sql);
             // }
             else {
 
-                LocalLog::ERROR('DBManager',$e->getMessage() . "[SQL]:$sql");
+                LocalLog::ERROR('DBManager', $e->getMessage() . "[SQL]:$sql");
 
                 return array(
                     'code' => SERVICE_SQL_ERROR['code'],
@@ -150,7 +141,7 @@ class DBManager
      */
     public function query($sql)
     {
-        LocalLog::logSql("info","SQL","[ ".$this->dsn." ] ".$sql);
+        LocalLog::logSql("info", "SQL", "[ " . $this->dsn . " ] " . $sql);
 
         try {
 
@@ -159,13 +150,12 @@ class DBManager
                 'data' => $this->pdo->query($sql),
                 'msg' => SERVICE_RESPOSE_SUCCESS['msg']
             );
-
         } catch (PDOException $e) {
 
-            LocalLog::ERROR('DBManager',$e->getMessage() . "[SQL]:$sql");
+            LocalLog::ERROR('DBManager', $e->getMessage() . "[SQL]:$sql");
 
             // if ($e->errorInfo[1] == 2006 || $e->errorInfo[1] == 2013) {
-                
+
             //     DBManager::destoryInstance();
             //     DBManager::getManager();
             //     $this->query($sql);
@@ -204,7 +194,8 @@ class DBManager
     /**
      * 开启事务
      */
-    public function begin() {
+    public function begin()
+    {
 
         $sql = "BEGIN;";
 
@@ -214,7 +205,8 @@ class DBManager
     /**
      * 事务回滚
      */
-    public function rollback() {
+    public function rollback()
+    {
 
         $sql = "ROLLBACK;";
 
@@ -224,7 +216,8 @@ class DBManager
     /**
      * 事务提交
      */
-    public function commit() {
+    public function commit()
+    {
 
         $sql = "COMMIT;";
 
@@ -234,7 +227,8 @@ class DBManager
     /**
      * 事务自动提交
      */
-    public function enable_auto_commit() {
+    public function enable_auto_commit()
+    {
 
         $sql = "ROLLBACK;";
 
@@ -244,7 +238,8 @@ class DBManager
     /**
      * 禁用事务自动提交
      */
-    public function disenable_auto_commit() {
+    public function disenable_auto_commit()
+    {
 
         $sql = "ROLLBACK;";
 
@@ -294,6 +289,80 @@ class DBManager
             $description = $arr[1];
 
             $sql = $sql . $key . " " . $value . " COMMENT '$description', ";
+        }
+        $sql = substr($sql, 0, strlen($sql) - 2);
+        $sql = $sql . ") ENGINE=InnoDB DEFAULT CHARSET='utf8'";
+
+        return $this->exec($sql);
+    }
+
+    /**
+     * 创建表格
+     * $tableName 要创建的表格名
+     * $data 创建的数据（带有键值对的数组）
+     * return 消息字符串
+     */
+    public function createTable2($tableName, $data)
+    {
+        $dbname = $this->get_dbname($tableName);
+        foreach ($data as $key => $value) {
+            $data = $value;
+        }
+
+        // 添加时间
+        $data = array_merge(array("id" => array(
+            "des" => "分类id",
+            "columnProperty" => "int NOT NULL AUTO_INCREMENT PRIMARY KEY",
+            "sort" => "up",
+            "align" => "left",
+            "fixed" => "right",
+            "width" => 100,
+            "showInSearch" => true,
+            "formType" => "text",
+            "required" => true,
+        )), $data);
+        $data["create_at"] = array(
+            "des" => "创建时间",
+            "columnProperty" => "DATETIME",
+            "sort" => "up",
+            "align" => "left",
+            "fixed" => "right",
+            "width" => 100,
+            "showInSearch" => true,
+            "formType" => "text",
+            "required" => true,
+        );
+        $data["update_at"] = array(
+            "des" => "更新时间",
+            "columnProperty" => "DATETIME",
+            "sort" => "up",
+            "align" => "left",
+            "fixed" => "right",
+            "width" => 100,
+            "showInSearch" => true,
+            "formType" => "text",
+            "required" => true,
+        );
+        $data["delete_at"] = array(
+            "des" => "删除时间",
+            "columnProperty" => "DATETIME",
+            "sort" => "up",
+            "align" => "left",
+            "fixed" => "right",
+            "width" => 100,
+            "showInSearch" => true,
+            "formType" => "text",
+            "required" => true,
+        );
+
+        $sql = "CREATE TABLE $dbname.$tableName (";
+        foreach ($data as $key => $value) {
+
+            $column = $key;
+            $columnProperty = $value["columnProperty"];
+            $description = $value["des"];
+
+            $sql = $sql . $column . " " . $columnProperty . " COMMENT '$description', ";
         }
         $sql = substr($sql, 0, strlen($sql) - 2);
         $sql = $sql . ") ENGINE=InnoDB DEFAULT CHARSET='utf8'";
@@ -366,8 +435,7 @@ class DBManager
                 ),
                 'msg' => SERVICE_RESPOSE_SUCCESS['msg']
             );
-        }
-        else {
+        } else {
 
             return $res;
         }
@@ -387,7 +455,7 @@ class DBManager
         $sql = "UPDATE $dbname.$tableName SET ";
         foreach ($data as $key => $value) {
 
-            if ($key != 'uid' && $key != 'id' ) {
+            if ($key != 'uid' && $key != 'id') {
 
                 $sql = " $sql $key = '$value', ";
             }
@@ -508,18 +576,18 @@ class DBManager
 
                 $dataArray = array();
                 $arrayKeys = array_keys($row);
-    
+
                 foreach ($arrayKeys as $key) {
-    
+
                     if (!is_numeric($key)) {
-    
+
                         $dataArray[strtolower($key)] = $row[$key];
                     }
                 }
-                
+
                 Array_push($listArray, $dataArray);
             }
-    
+
             $condition = explode('LIMIT', $condition);
             $condition = $condition[0];
             $total = $this->tableTotalCountWithCondition($tableName, $condition);
@@ -532,9 +600,8 @@ class DBManager
                     'total' => $total,
                     'data' => $listArray,
                 );
-            }
-            else {
-    
+            } else {
+
                 return array(
                     'code' => SERVICE_RESPOSE_SUCCESS['code'],
                     'msg' => SERVICE_RESPOSE_SUCCESS['msg'],
@@ -542,16 +609,15 @@ class DBManager
                     'data' => $listArray,
                 );
             }
-        }
-        else {
+        } else {
 
             if (DEBUG) {
-                
+
                 return $result;
             }
         }
     }
-    
+
     /**
      * 查找数据 (需要自己去处理里面的数据)
      * $tableName 查找数据的表格名
@@ -575,32 +641,45 @@ class DBManager
 
                 $dataArray = array();
                 $arrayKeys = array_keys($row);
-    
+
                 foreach ($arrayKeys as $key) {
-    
+
                     if (!is_numeric($key)) {
-    
+
                         $dataArray[strtolower($key)] = $row[$key];
                     }
                 }
-                
+
                 Array_push($listArray, $dataArray);
             }
         }
-        
+
         return $listArray;
     }
 
-    public static function get_dbname($tableName) {
 
-        if (array_key_exists($tableName,TABLE_DB_ARRAY)) {
+    /**
+     * 驼峰命名转下划线命名
+     * 思路:
+     * 小写和大写紧挨一起的地方,加上分隔符,然后全部转小写
+     * 
+     */
+    public static function uncamelize($camelCaps, $separator = '_')
+    {
+        return strtolower(preg_replace('/([a-z])([A-Z])/', "$1" . $separator . "$2", $camelCaps));
+    }
+
+    public static function get_dbname($tableName)
+    {
+        $tableName = DBManager::uncamelize($tableName);
+
+        if (array_key_exists($tableName, TABLE_DB_ARRAY)) {
             $dbname = TABLE_DB_ARRAY[$tableName];
-        }   
-        else {
+        } else {
 
             throw new Exception("$tableName 未在 TABLE_DB_ARRAY 中定义！", SERVICE_SQL_ERROR['code'], null);
         }
-        
+
         return $dbname;
     }
 }

@@ -75,7 +75,7 @@ class LocalLog
 
 	public static function SEPRATOR($title, $msg)
 	{
-		self::$instance->write('blank', $title, $msg);
+		self::$instance->write('seprator', $title, $msg);
 	}
 
 	public static function TITLE($title, $msg)
@@ -301,7 +301,6 @@ class LocalLog
 		}
 
 		if (CONSOLE_OUT || self::$instance->mode == 1) {
-
 			$msg_log = LocalLog::getConsoleString($type, $title, $msg);
 
 			echo $msg_log;

@@ -55,7 +55,14 @@ class AppConfig
      */
     public static function config_env($config)
     {
-        echo "[FAST_PHP]: config env...\r\n";
+        $path = getcwd();
+        $arr = explode("/", $path);
+        $arr = array_slice($arr, 0, count($arr) - 2);
+        $path = implode("/", $arr) . "/";
+
+        include_once $path . "fast_php_creator/Utils/table_util.php";
+        // include_once $path . "fast_php_core/Utils/data_util.php";
+        // include_once $path . "fast_php_core/Utils/file_util.php";
 
         // 是否开启日志
         define('LOG_ON', $config->LOG_ON);
@@ -135,8 +142,6 @@ class AppConfig
      */
     public static function include_venders($config)
     {
-        echo "[FAST_PHP]: include venders...\r\n";
-
         foreach ($config->VENDERS as $item) {
 
             $item = APP_ROOT . "Venders/$item";

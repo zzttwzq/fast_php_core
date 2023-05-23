@@ -12,7 +12,7 @@ class DBHelper
     {
         //创建manager
         $this->manager = DBManager::getInstance(DB_HOST, '', DB_USER, DB_PWD);
-        $this->table_name = get_class($this);
+        $this->table_name = $this->uncamelize(get_class($this));
         $this->table_name .= '';
         $this->on_init();
     }
@@ -426,5 +426,10 @@ class DBHelper
 
             return null;
         }
+    }
+
+    public static function uncamelize($camelCaps, $separator = '_')
+    {
+        return strtolower(preg_replace('/([a-z])([A-Z])/', "$1" . $separator . "$2", $camelCaps));
     }
 }
